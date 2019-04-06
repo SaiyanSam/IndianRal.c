@@ -5,30 +5,51 @@
 
 int waiting=0;  //global variable representing passengers waiting at station
 struct lock lock1;  //global lock structure object
+int seats;
 
 struct station
 {
     int person_no;  //here pass_no represent number of people waiting on station for train
+    int person_boarded;
 };
 struct station station_init()
 {
     struct station a_station;
     return a_station;
 }
-int station_load_train(struct station *station, int count)
+void station_load_train(struct station *station, int count)
 {
     int remaining;
+    remaining=0;
     if(station->person_no<=count)
     {
-        remaining=0;
-        printf("\n  Seats available for all waiting passengers. All %d passengers can board.\n\n",station->person_no);
+        if(station->person_no==0)
+        {
+            printf("\n  No passenger present for boarding. \n\n");
+            station->person_boarded=0;
+        }
+        else
+        {
+            printf("\n  Seats available for all waiting passengers. All %d passengers can board.\n\n",station->person_no);
+            station->person_boarded=station->person_no;
+        }
     }
     else
     {
         remaining=station->person_no-count;
         printf("\n  Seats not available for all passengers.\n\n  %d passengers can board.\n  %d passengers need to wait for next train. We are sorry for the inconvenience.\n\n",count,remaining);
+        station->person_boarded=count;
     }
-    return remaining;
+    //Allocating passengers to their seats
+    printf("  Train boarding in progress");
+    for(int a=0;a<5;a++)
+    {
+        Sleep(500);
+        printf(".");
+    }
+    printf("\n\n");
+    station->person_no=remaining;
+    waiting=station->person_no;
 }
 void station_wait_for_train(struct station *station)
 {
@@ -39,18 +60,18 @@ void station_wait_for_train(struct station *station)
 }
 void station_on_board(struct station *station)
 {
-
+    printf("  Boarding successful. Boarding Summary : \n\n");
+    printf("  _______________________________________________________________________________\n");
+    printf("                       Total seats available : %d\n",seats);
+    printf("                    Number of passengers boarded : %d\n",station->person_boarded);
+    printf("                  Number of passengers left on station : %d\n",station->person_no);
+    printf("  _______________________________________________________________________________\n\n");
 }
 
 struct lock
 {
     int i;  // variable to be used as a flag
 };
-
-struct lock lock_init()
-{
-    //initialize lock structure
-}
 int lock_acquire(struct lock *lock)
 {
     if(lock->i!=1)
@@ -65,13 +86,14 @@ void lock_release(struct lock *lock)
 }
 
 int main()
-{   int a,seats,train_no=0;
+{   int a,train_no=0;
     char choice;
     struct station station=station_init();
     station.person_no=0;
 
     X:
-    printf("\n\n  Enter the number of people arrived at station : ");
+    printf("\n\n  Number of people already waiting on station : %d\n",waiting);
+    printf("  Enter the number of people arrived at station : ");
     scanf("%d",&a);  // a represent then newly arrived passengers
     waiting=waiting+a;
 
@@ -82,7 +104,7 @@ int main()
         pthread_join(thread[i] , NULL);
     }
     printf("  Data updated.");
-    printf("  Number of passengers waiting on station : %d\n",station.person_no);
+    printf("  Updated number of passengers waiting on station : %d\n",station.person_no);
     Sleep(1000);
 
     printf("\n  Train has arrived.\n");
@@ -110,8 +132,8 @@ int main()
     }
     train_no++;
 
-    waiting=station_load_train(&station , seats);
-    station.person_no=waiting;
+    station_load_train(&station , seats);
+    station_on_board(&station);  //Function called as seats have been allocated
 
     Y:
     printf("  Do you want to continue the simulation? (Y/N)...  ");
