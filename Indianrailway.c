@@ -4,13 +4,14 @@
 #include<windows.h>
 
 int waiting=0;  //global variable representing passengers waiting at station
-struct lock lock1;  //global lock structure object
 int seats;
 
 struct station
 {
     int person_no;  //here pass_no represent number of people waiting on station for train
     int person_boarded;
+    struct lock *lock1;
+    struct condition *cond;
 };
 struct station station_init()
 {
@@ -53,9 +54,9 @@ void station_load_train(struct station *station, int count)
 }
 void station_wait_for_train(struct station *station)
 {
-    lock_acquire(&lock1);
+    lock_acquire(&station);
     station->person_no++;
-    lock_release(&lock1);
+    lock_release(&station);
 }
 void station_on_board(struct station *station)
 {
@@ -67,22 +68,35 @@ void station_on_board(struct station *station)
     printf("  _______________________________________________________________________________\n\n");
 }
 
-struct lock
-{
-    int i;  // variable to be used as a flag
-};
-void lock_init(struct locl *lock)
+void lock_init(struct lock *lock)
 {
     pthread_mutex_t lock1;
     pthread_mutex_init(&lock1 , NULL);
 }
-void lock_acquire(struct lock *lock)
+void lock_acquire(struct lock *lock1)
 {
     pthread_mutex_lock(&lock1);
 }
-void lock_release(struct lock *lock)
+void lock_release(struct lock *lock1)
 {
     pthread_mutex_unlock(&lock1);
+}
+
+void cond_init(struct condition *cond)
+{
+    pthread_cond_t aCond;
+}
+void cond_wait(struct condition *aCond , struct lock *lock1)
+{
+    pthread_cond_wait(&aCond,&lock1);
+}
+void cond_signal(struct condition *aCond)
+{
+    pthread_cond_signal(&aCond);
+}
+void cond_broadcast(struct condition *aCond)
+{
+    pthread_cond_broadcast(&aCond);
 }
 
 int main()
