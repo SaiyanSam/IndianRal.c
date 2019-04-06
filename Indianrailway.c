@@ -5,6 +5,9 @@
 
 int waiting=0;  //global variable representing passengers waiting at station
 int seats;
+pthread_mutex_t lock1;
+pthread_cond_t aCond;
+
 
 struct station
 {
@@ -54,9 +57,17 @@ void station_load_train(struct station *station, int count)
 }
 void station_wait_for_train(struct station *station)
 {
-    lock_acquire(&station);
+    lock_acquire(&lock1);
     station->person_no++;
-    lock_release(&station);
+    if(station->person_no>500)
+    {
+        pthread_cond_wait(&aCond,&lock1);
+    }
+    else
+    {
+        pthread_cond_signal(&aCond);
+    }
+    lock_release(&lock1);
 }
 void station_on_board(struct station *station)
 {
@@ -70,7 +81,6 @@ void station_on_board(struct station *station)
 
 void lock_init(struct lock *lock)
 {
-    pthread_mutex_t lock1;
     pthread_mutex_init(&lock1 , NULL);
 }
 void lock_acquire(struct lock *lock1)
@@ -82,10 +92,6 @@ void lock_release(struct lock *lock1)
     pthread_mutex_unlock(&lock1);
 }
 
-void cond_init(struct condition *cond)
-{
-    pthread_cond_t aCond;
-}
 void cond_wait(struct condition *aCond , struct lock *lock1)
 {
     pthread_cond_wait(&aCond,&lock1);
